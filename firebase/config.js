@@ -6,12 +6,21 @@ import { getAuth } from "firebase/auth";
 // PASTE YOUR FIREBASE CONFIG KEYS HERE
 // You can find them in your terminal screenshot
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+
+  apiKey: "AIzaSyCVzQGUYRf2GLblNnDxYn7FrXksy9-O8Ig",
+
   authDomain: "progress-tracker-ea7d8.firebaseapp.com",
+
   projectId: "progress-tracker-ea7d8",
-  storageBucket: "progress-tracker-ea7d8.appspot.com",
-  messagingSenderId: "786...",
-  appId: "1:786...:web:..."
+
+  storageBucket: "progress-tracker-ea7d8.firebasestorage.app",
+
+  messagingSenderId: "75869585957",
+
+  appId: "1:75869585957:web:89945750a3fea90a2fb5cc",
+
+  measurementId: "G-1QS3ZQZQ0W"
+
 };
 
 const app = initializeApp(firebaseConfig);
