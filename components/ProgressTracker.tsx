@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft } from 'lucide-react';
 import { db } from '@/firebase/config';
 import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -11,20 +11,20 @@ interface Skill { id: string; name: string; category: string; targetHours: numbe
 
 const ProgressTracker = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [skills, setSkills] = useState<any[]>([]);
+  const [skills, setSkills] = React.useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [selectedSkill, setSelectedSkill] = React.useState(null);
   
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showAddSkill, setShowAddSkill] = useState(false);
-  const [showAddEntry, setShowAddEntry] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [newSkill, setNewSkill] = useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
-  const [newEntry, setNewEntry] = useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
+  const [activeTab, setActiveTab] = React.useState('overview');
+  const [showAddSkill, setShowAddSkill] = React.useState(false);
+  const [showAddEntry, setShowAddEntry] = React.useState(false);
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+  const [newSkill, setNewSkill] = React.useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
+  const [newEntry, setNewEntry] = React.useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
 
   const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500', 'bg-teal-500'];
 
-  useEffect(() => {
+  React.useEffect(() => {
     const skillsCollection = collection(db, 'skills');
     const unsubscribe = onSnapshot(skillsCollection, (snapshot) => {
       const skillsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
