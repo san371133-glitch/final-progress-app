@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft } from 'lucide-react';
-import { db } from '../firebase/config';
+import { db } from '@/firebase/config';
 import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 // Define the shape of our data for TypeScript
