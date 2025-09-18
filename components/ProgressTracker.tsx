@@ -10,10 +10,13 @@ interface Entry { id: number; date: string; hours: string; notes: string; }
 interface Skill { id: string; name: string; category: string; targetHours: number; color: string; entries: Entry[]; }
 
 const ProgressTracker = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [skills, setSkills] = React.useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedSkill, setSelectedSkill] = React.useState(null);
+  // The "permit" for the skills state
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ const [skills, setSkills] = React.useState<any[]>([]);
+
+// The "permit" for the selectedSkill state
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const [selectedSkill, setSelectedSkill] = React.useState(null);
   
   const [activeTab, setActiveTab] = React.useState('overview');
   const [showAddSkill, setShowAddSkill] = React.useState(false);
