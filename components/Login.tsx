@@ -18,9 +18,9 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} catch (error: any) {
-  setError(error.message);
-}
+    } catch (err: any) { // This is where the error was
+      setError(err.message);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -28,16 +28,17 @@ const Login = () => {
     setError('');
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} catch (error: any) {
-  setError(error.message);
-}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) { // This is the second place the error was
+      setError(err.message);
+    }
   };
 
   const handleGoogleSignIn = async () => {
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) { // And the third
       setError(err.message);
     }
