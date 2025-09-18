@@ -104,7 +104,6 @@ const ProgressTracker = () => {
   const isToday = (date: Date) => new Date().toDateString() === date.toDateString();
   const TabButton = ({ id, icon: Icon, label, isActive, onClick }: { id: string, icon: React.ElementType, label: string, isActive: boolean, onClick: (id: string) => void }) => ( <button onClick={() => onClick(id)} className={`flex items-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${ isActive ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-200' }`}><Icon size={20} /><span>{label}</span></button> );
   
-  // This version of SkillCard is correct and does not have unused props
   const SkillCard = ({ skill }: { skill: Skill }) => ( 
     <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer hover:transform hover:scale-105">
       <div className="flex items-center justify-between mb-4">
