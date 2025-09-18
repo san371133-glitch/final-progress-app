@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+// 1. Import getAuth
+import { getAuth } from "firebase/auth";
 
 // PASTE YOUR FIREBASE CONFIG KEYS HERE
 // You can find them in your terminal screenshot
@@ -14,6 +16,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// 2. Initialize and export auth
+const auth = getAuth(app);
 
 // This is the crucial line that makes your database available to other files
-export { db };
+export { db, auth };

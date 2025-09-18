@@ -1,52 +1,128 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft } from 'lucide-react';
 import { db } from '@/firebase/config';
 import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { User } from 'firebase/auth'; // Import User type
 
-// Define the shape of our data for TypeScript
-interface Entry { id: number; date: string; hours: string; notes: string; }
-interface Skill { id: string; name: string; category: string; targetHours: number; color: string; entries: Entry[]; }
+// Define the shape of our data for TypeScript (This fixes the 'any' type error)
+interface Entry {
+  id: number;
+  date: string;
+  hours: string;
+  notes: string;
+}
 
-const ProgressTracker = () => {
-  // The "permit" for the skills state
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
- const [skills, setSkills] = React.useState<any[]>([]);
+interface Skill {
+  id: string;
+  name: string;
+  category: string;
+  targetHours: number;
+  color: string;
+  entries: Entry[];
+}
 
-// The "permit" for the selectedSkill state
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const [selectedSkill, setSelectedSkill] = React.useState(null);
+interface ProgressTrackerProps {
+  user: User;
+}
+
+const ProgressTracker = ({ user }: ProgressTrackerProps) => {
+  // Use the correct, specific types for our state
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   
-  const [activeTab, setActiveTab] = React.useState('overview');
-  const [showAddSkill, setShowAddSkill] = React.useState(false);
-  const [showAddEntry, setShowAddEntry] = React.useState(false);
-  const [currentDate, setCurrentDate] = React.useState(new Date());
-  const [newSkill, setNewSkill] = React.useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
-  const [newEntry, setNewEntry] = React.useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [showAddEntry, setShowAddEntry] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [newSkill, setNewSkill] = useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
+  const [newEntry, setNewEntry] = useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
 
   const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500', 'bg-teal-500'];
 
-  React.useEffect(() => {
+  // Fetch data from Firestore
+  useEffect(() => {
     const skillsCollection = collection(db, 'skills');
     const unsubscribe = onSnapshot(skillsCollection, (snapshot) => {
-      const skillsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const skillsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as Skill)); // Ensure the data matches our Skill interface
       setSkills(skillsData);
     });
     return () => unsubscribe();
   }, []);
   
-  const addSkill = async () => { if (newSkill.name && newSkill.category) { await addDoc(collection(db, 'skills'), { ...newSkill, entries: [] }); setNewSkill({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' }); setShowAddSkill(false); } };
-  const addEntry = async () => { if (selectedSkill && newEntry.hours && newEntry.notes) { const skillDocRef = doc(db, 'skills', (selectedSkill as Skill).id); const entryWithId = { ...newEntry, id: Date.now() }; await updateDoc(skillDocRef, { entries: arrayUnion(entryWithId) }); setNewEntry({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] }); setShowAddEntry(false); setSelectedSkill(null); } };
-  const getTotalHours = (skill: Skill) => (skill.entries || []).reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
-  const getWeekProgress = (skill: Skill) => { const weekEntries = (skill.entries || []).filter(entry => { const entryDate = new Date(entry.date); const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7); return entryDate >= weekAgo; }); return weekEntries.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0); };
-  const getDayEntries = (date: Date) => { const dateStr = date.toISOString().split('T')[0]; const dayEntries: any[] = []; skills.forEach(skill => { const entries = (skill.entries || []).filter(entry => entry.date === dateStr); entries.forEach(entry => dayEntries.push({ ...entry, skillName: skill.name, skillColor: skill.color })); }); return dayEntries; };
-  const getDayTotalHours = (date: Date) => getDayEntries(date).reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
-  const generateCalendarDays = () => { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const daysInMonth = lastDay.getDate(); const startingDayOfWeek = firstDay.getDay(); const days: { date: Date, isCurrentMonth: boolean }[] = []; const prevMonth = new Date(year, month - 1, 0); for (let i = startingDayOfWeek - 1; i >= 0; i--) { days.push({ date: new Date(year, month - 1, prevMonth.getDate() - i), isCurrentMonth: false }); } for (let day = 1; day <= daysInMonth; day++) { days.push({ date: new Date(year, month, day), isCurrentMonth: true }); } const remainingDays = 42 - days.length; for (let day = 1; day <= remainingDays; day++) { days.push({ date: new Date(year, month + 1, day), isCurrentMonth: false }); } return days; };
+  const addSkill = async () => {
+    if (newSkill.name && newSkill.category) {
+      await addDoc(collection(db, 'skills'), { ...newSkill, entries: [] });
+      setNewSkill({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
+      setShowAddSkill(false);
+    }
+  };
+
+  const addEntry = async () => {
+    if (selectedSkill && newEntry.hours && newEntry.notes) {
+      const skillDocRef = doc(db, 'skills', selectedSkill.id);
+      const entryWithId = { ...newEntry, id: Date.now() };
+      await updateDoc(skillDocRef, { entries: arrayUnion(entryWithId) });
+      setNewEntry({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
+      setShowAddEntry(false);
+      setSelectedSkill(null);
+    }
+  };
+  
+  const getTotalHours = (skill: Skill) => (skill.entries || []).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
+  const getWeekProgress = (skill: Skill) => {
+    const weekEntries = (skill.entries || []).filter(entry => {
+      const entryDate = new Date(entry.date);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return entryDate >= weekAgo;
+    });
+    return weekEntries.reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
+  };
+  const getDayEntries = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    const dayEntries: (Entry & { skillName: string, skillColor: string })[] = [];
+    skills.forEach(skill => {
+      const entries = (skill.entries || []).filter(entry => entry.date === dateStr);
+      entries.forEach(entry => dayEntries.push({ ...entry, skillName: skill.name, skillColor: skill.color }));
+    });
+    return dayEntries;
+  };
+  const getDayTotalHours = (date: Date) => getDayEntries(date).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
+  const generateCalendarDays = () => {
+    const year = currentDate.getFullYear(); const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate(); const startingDayOfWeek = firstDay.getDay();
+    const days: { date: Date, isCurrentMonth: boolean }[] = [];
+    const prevMonth = new Date(year, month - 1, 0);
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) { days.push({ date: new Date(year, month - 1, prevMonth.getDate() - i), isCurrentMonth: false }); }
+    for (let day = 1; day <= daysInMonth; day++) { days.push({ date: new Date(year, month, day), isCurrentMonth: true }); }
+    const remainingDays = 42 - days.length;
+    for (let day = 1; day <= remainingDays; day++) { days.push({ date: new Date(year, month + 1, day), isCurrentMonth: false }); }
+    return days;
+  };
   const navigateMonth = (direction: number) => { const newDate = new Date(currentDate); newDate.setMonth(currentDate.getMonth() + direction); setCurrentDate(newDate); };
   const isToday = (date: Date) => new Date().toDateString() === date.toDateString();
   const TabButton = ({ id, icon: Icon, label, isActive, onClick }: { id: string, icon: React.ElementType, label: string, isActive: boolean, onClick: (id: string) => void }) => ( <button onClick={() => onClick(id)} className={`flex items-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${ isActive ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-200' }`}><Icon size={20} /><span>{label}</span></button> );
-  const SkillCard = ({ skill }: { skill: Skill }) => ( <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer hover:transform hover:scale-105"><div className="flex items-center justify-between mb-4"><div className="flex items-center gap-3"><div className={`w-4 h-4 rounded-full ${skill.color}`}></div><h3 className="font-bold text-lg text-gray-800">{skill.name}</h3></div><span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{skill.category}</span></div><div className="space-y-3"><div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div><div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div><div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div><div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div></div></div> );
+  
+  const SkillCard = ({ skill }: { skill: Skill }) => ( 
+    <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer hover:transform hover:scale-105">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3"><div className={`w-4 h-4 rounded-full ${skill.color}`}></div><h3 className="font-bold text-lg text-gray-800">{skill.name}</h3></div>
+        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{skill.category}</span>
+      </div>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div>
+        <div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div>
+        <div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div>
+        <div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div>
+      </div>
+    </div>
+  );
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

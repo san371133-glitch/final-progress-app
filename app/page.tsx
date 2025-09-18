@@ -1,9 +1,9 @@
-import ProgressTracker from '@/components/ProgressTracker';
+import AuthWrapper from '@/components/AuthWrapper';
 
 export default function Home() {
   return (
     <main>
-      <ProgressTracker />
+      <AuthWrapper />
     </main>
   );
 }
