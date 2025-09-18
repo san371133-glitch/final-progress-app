@@ -68,7 +68,7 @@ const ProgressTracker = () => {
     }
   };
   
-  const getTotalHours = (skill: Skill) => (skill.entries || []).reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
+  const getTotalHours = (skill: Skill) => (skill.entries || []).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   const getWeekProgress = (skill: Skill) => {
     const weekEntries = (skill.entries || []).filter(entry => {
       const entryDate = new Date(entry.date);
@@ -76,7 +76,7 @@ const ProgressTracker = () => {
       weekAgo.setDate(weekAgo.getDate() - 7);
       return entryDate >= weekAgo;
     });
-    return weekEntries.reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
+    return weekEntries.reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   };
   const getDayEntries = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
@@ -87,7 +87,7 @@ const ProgressTracker = () => {
     });
     return dayEntries;
   };
-  const getDayTotalHours = (date: Date) => getDayEntries(date).reduce((total, entry) => total + parseFloat(entry.hours || 0), 0);
+  const getDayTotalHours = (date: Date) => getDayEntries(date).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   const generateCalendarDays = () => {
     const year = currentDate.getFullYear(); const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0);
