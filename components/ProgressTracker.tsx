@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft, LogOut ,Trash2 } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft, LogOut, Trash2 } from 'lucide-react';
 import { db, auth } from '../firebase/config';
 import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion, query, where, deleteDoc } from 'firebase/firestore';
 import { User, signOut } from 'firebase/auth';
@@ -10,8 +10,7 @@ import { User, signOut } from 'firebase/auth';
 interface Entry { id: number; date: string; hours: string; notes: string; }
 interface Skill { id: string; name: string; category: string; targetHours: number; color: string; entries: Entry[]; userId: string; }
 
-// --- NEW HELPER FUNCTION TO GET LOCAL DATE ---
-// This function gets today's date in the user's local timezone and formats it as "YYYY-MM-DD"
+// Helper function to get today's date in the user's local timezone
 const getTodayLocalISOString = () => {
   const date = new Date();
   const year = date.getFullYear();
@@ -19,7 +18,6 @@ const getTodayLocalISOString = () => {
   const day = date.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
 
 const ProgressTracker = ({ user }: { user: User }) => {
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -29,8 +27,6 @@ const ProgressTracker = ({ user }: { user: User }) => {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [newSkill, setNewSkill] = useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
-  
-  // --- UPDATED: Use the new helper function for the default date ---
   const [newEntry, setNewEntry] = useState({ hours: '', notes: '', date: getTodayLocalISOString() });
 
   const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500', 'bg-teal-500'];
@@ -63,8 +59,8 @@ const ProgressTracker = ({ user }: { user: User }) => {
       setSelectedSkill(null);
     }
   };
+
   const deleteSkill = async (skillId: string) => {
-    // Ask for confirmation before deleting
     if (window.confirm("Are you sure you want to delete this skill and all its entries? This action cannot be undone.")) {
       try {
         const skillDocRef = doc(db, 'skills', skillId);
@@ -76,13 +72,9 @@ const ProgressTracker = ({ user }: { user: User }) => {
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth);
-  };
+  const handleLogout = () => { signOut(auth); };
   
-  // --- UPDATED: All date comparisons now correctly handle local time ---
   const parseLocalDate = (dateString: string) => new Date(dateString + 'T00:00:00');
-
   const getTotalHours = (skill: Skill) => (skill.entries || []).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   const getWeekProgress = (skill: Skill) => {
     const weekEntries = (skill.entries || []).filter(entry => {
@@ -94,81 +86,36 @@ const ProgressTracker = ({ user }: { user: User }) => {
     });
     return weekEntries.reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   };
-
   const getDayEntries = (date: Date) => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
+    const year = date.getFullYear(); const month = (date.getMonth() + 1).toString().padStart(2, '0'); const day = date.getDate().toString().padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
-
     const dayEntries: (Entry & { skillName: string, skillColor: string })[] = [];
-    skills.forEach(skill => {
-      const entries = (skill.entries || []).filter(entry => entry.date === dateStr);
-      entries.forEach(entry => dayEntries.push({ ...entry, skillName: skill.name, skillColor: skill.color }));
-    });
+    skills.forEach(skill => { const entries = (skill.entries || []).filter(entry => entry.date === dateStr); entries.forEach(entry => dayEntries.push({ ...entry, skillName: skill.name, skillColor: skill.color })); });
     return dayEntries;
   };
-
   const getDayTotalHours = (date: Date) => getDayEntries(date).reduce((total, entry) => total + parseFloat(entry.hours || "0"), 0);
   const generateCalendarDays = () => { const year = currentDate.getFullYear(); const month = currentDate.getMonth(); const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const daysInMonth = lastDay.getDate(); const startingDayOfWeek = firstDay.getDay(); const days: { date: Date, isCurrentMonth: boolean }[] = []; const prevMonth = new Date(year, month - 1, 0); for (let i = startingDayOfWeek - 1; i >= 0; i--) { days.push({ date: new Date(year, month - 1, prevMonth.getDate() - i), isCurrentMonth: false }); } for (let day = 1; day <= daysInMonth; day++) { days.push({ date: new Date(year, month, day), isCurrentMonth: true }); } const remainingDays = 42 - days.length; for (let day = 1; day <= remainingDays; day++) { days.push({ date: new Date(year, month + 1, day), isCurrentMonth: false }); } return days; };
   const navigateMonth = (direction: number) => { const newDate = new Date(currentDate); newDate.setMonth(currentDate.getMonth() + direction); setCurrentDate(newDate); };
   const isToday = (date: Date) => new Date().toDateString() === date.toDateString();
   const TabButton = ({ id, icon: Icon, label, isActive, onClick }: { id: string, icon: React.ElementType, label: string, isActive: boolean, onClick: (id: string) => void }) => ( <button onClick={() => onClick(id)} className={`flex items-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${ isActive ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-200' }`}><Icon size={20} /><span>{label}</span></button> );
+  
   const SkillCard = ({ skill }: { skill: Skill }) => ( 
     <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group relative">
-      {/* New Delete Button */}
-      <button 
-        onClick={(e) => {
-          e.stopPropagation(); // Prevents the card's main click event
-          deleteSkill(skill.id);
-        }}
-        className="absolute top-4 right-4 p-2 bg-red-100 text-red-500 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-200 transition-opacity duration-300"
-        title="Delete Skill"
-      >
-        <Trash2 size={16} />
-      </button>
-  
+      <button onClick={(e) => { e.stopPropagation(); deleteSkill(skill.id); }} className="absolute top-4 right-4 p-2 bg-red-100 text-red-500 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-200 transition-opacity duration-300" title="Delete Skill"><Trash2 size={16} /></button>
       <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="cursor-pointer">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full ${skill.color}`}></div>
-            <h3 className="font-bold text-lg text-gray-800">{skill.name}</h3>
-          </div>
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            {skill.category}
-          </span>
-        </div>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div>
-          <div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div>
-          <div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div>
-          <div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div>
-        </div>
+        <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-3"><div className={`w-4 h-4 rounded-full ${skill.color}`}></div><h3 className="font-bold text-lg text-gray-800">{skill.name}</h3></div><span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{skill.category}</span></div>
+        <div className="space-y-3"><div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div><div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div><div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div><div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div></div>
       </div>
     </div>
   );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Daily Progress Tracker</h1>
-              <p className="text-gray-600">Track your learning journey and celebrate your growth</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="font-semibold text-gray-700">{user.email}</div>
-                <div className="text-sm text-gray-500">Signed In</div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                title="Logout"
-              >
-                <LogOut size={20} />
-              </button>
-            </div>
+            <div><h1 className="text-3xl font-bold text-gray-800 mb-2">Daily Progress Tracker</h1><p className="text-gray-600">Track your learning journey and celebrate your growth</p></div>
+            <div className="flex items-center gap-4"><div className="text-right"><div className="font-semibold text-gray-700">{user.email}</div><div className="text-sm text-gray-500">Signed In</div></div><button onClick={handleLogout} className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Logout"><LogOut size={20} /></button></div>
           </div>
         </div>
       </div>
@@ -178,8 +125,19 @@ const ProgressTracker = ({ user }: { user: User }) => {
         {activeTab === 'skills' && (<div className="space-y-6"><div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-gray-800">Manage Skills</h2><button onClick={() => setShowAddSkill(true)} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:shadow-lg transition-all duration-300"><Plus size={20} />Add Skill</button></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{skills.map(skill => <SkillCard key={skill.id} skill={skill} />)}</div></div>)}
         {activeTab === 'progress' && (<div className="space-y-6"><h2 className="text-2xl font-bold text-gray-800">Progress Overview</h2>{skills.map(skill => ( <div key={skill.id} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"><div className="flex items-center gap-3 mb-4"><div className={`w-4 h-4 rounded-full ${skill.color}`}></div><h3 className="text-xl font-bold text-gray-800">{skill.name}</h3><span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{skill.category}</span></div><div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div className="text-center"><div className="text-2xl font-bold text-gray-800">{getTotalHours(skill).toFixed(1)}h</div><div className="text-sm text-gray-600">Total Hours</div></div><div className="text-center"><div className="text-2xl font-bold text-green-600">{getWeekProgress(skill).toFixed(1)}h</div><div className="text-sm text-gray-600">This Week</div></div><div className="text-center"><div className="text-2xl font-bold text-blue-600">{(skill.entries || []).length}</div><div className="text-sm text-gray-600">Sessions</div></div></div><div className="space-y-3"><h4 className="font-semibold text-gray-700">Recent Entries</h4>{(skill.entries || []).slice(0, 3).map((entry, index) => <div key={index} className="bg-gray-50 rounded-lg p-3"><div className="flex justify-between items-start mb-1"><span className="font-semibold text-gray-700">{entry.date}</span><span className="text-blue-600 font-semibold">{entry.hours}h</span></div><p className="text-gray-600 text-sm">{entry.notes}</p></div>)}</div><button onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300">Add Entry</button></div>))}</div>)}
         {activeTab === 'calendar' && (<div className="space-y-6"><div className="flex items-center justify-between"><h2 className="text-2xl font-bold text-gray-800">Calendar View</h2><div className="flex items-center gap-4"><button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><ChevronLeft size={20} /></button><div className="text-lg font-semibold text-gray-700 min-w-[140px] text-center">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div><button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><ChevronRight size={20} /></button></div></div><div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"><div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day} className="p-4 text-center font-semibold text-gray-600 text-sm">{day}</div>)}</div><div className="grid grid-cols-7">{generateCalendarDays().map((dayObj, index) => { const dayEntries = getDayEntries(dayObj.date); const totalHours = getDayTotalHours(dayObj.date); return (<div key={index} className={`p-2 h-32 border-r border-b border-gray-100 ${!dayObj.isCurrentMonth ? 'bg-gray-50' : 'bg-white hover:bg-gray-50'} ${isToday(dayObj.date) ? 'bg-blue-50 border-blue-200' : ''}`}><div className={`text-sm font-semibold mb-1 ${!dayObj.isCurrentMonth ? 'text-gray-400' : isToday(dayObj.date) ? 'text-blue-600' : 'text-gray-700'}`}>{dayObj.date.getDate()}</div>{totalHours > 0 && (<div className="space-y-1"><div className={`text-xs font-medium ${isToday(dayObj.date) ? 'text-blue-600' : 'text-green-600'}`}>{totalHours.toFixed(1)}h</div><div className="space-y-1">{dayEntries.slice(0, 2).map((entry, entryIndex) => (<div key={entryIndex} className={`text-xs px-1 py-0.5 rounded text-white truncate ${entry.skillColor}`} title={`${entry.skillName}: ${entry.hours}h - ${entry.notes}`}>{entry.skillName}</div>))}{dayEntries.length > 2 && (<div className="text-xs text-gray-500">+{dayEntries.length - 2} more</div>)}</div></div>)}</div>); })}</div></div></div>)}
-        {showAddSkill && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"><div className="bg-white rounded-2xl p-6 w-full max-w-md"><h3 className="text-xl font-bold text-gray-800 mb-4">Add New Skill</h3><div className="space-y-4"><div><label className="block text-sm font-semibold text-gray-700 mb-2">Skill Name</label><input type="text" value={newSkill.name} onChange={(e) => setNewSkill({...newSkill, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl" placeholder="e.g., Python Programming"/></div><div><label className="block text-sm font-semibold text-gray-700 mb-2">Category</label><input type="text" value={newSkill.category} onChange={(e) => setNewSkill({...newSkill, category: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl" placeholder="e.g., Programming"/></div><div><label className="block text-sm font-semibold text-gray-700 mb-2">Daily Target (hours)</label><input type="number" step="0.5" value={newSkill.targetHours} onChange={(e) => setNewSkill({...newSkill, targetHours: parseFloat(e.target.value)})} className="w-full p-3 border border-gray-300 rounded-xl"/></div><div><label className="block text-sm font-semibold text-gray-700 mb-2">Color</label><div className="flex gap-2">{colors.map(color => <button key={color} onClick={() => setNewSkill({...newSkill, color})} className={`w-8 h-8 rounded-full ${color} ${newSkill.color === color ? 'ring-4 ring-gray-400' : ''}`} />)}</div></div></div><div className="flex gap-3 mt-6"><button onClick={() => setShowAddSkill(false)} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50">Cancel</button><button onClick={addSkill} className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg">Add Skill</button></div></div></div>)}
-        {showAddEntry && selectedSkill && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"><div className="bg-white rounded-2xl p-6 w-full max-w-md"><h3 className="text-xl font-bold text-gray-800 mb-4">Add Progress Entry</h3><p className="text-gray-600 mb-4">For: {selectedSkill.name}</p><div className="space-y-4"><div><label className="block text-sm font-semibold text-gray-700 mb-2">Date</label><input type="date" value={newEntry.date} onChange={(e) => setNewEntry({...newEntry, date: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl"/></div><div><label className="block text-sm font-semibold text-gray-700 mb-2">Hours Practiced</label><input type="number" step="0.25" value={newEntry.hours} onChange={(e) => setNewEntry({...newEntry, hours: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl" placeholder="1.5"/></div><div><label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label><textarea value={newEntry.notes} onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl h-24 resize-none" placeholder="What did you learn or practice today?"/></div></div><div className="flex gap-3 mt-6"><button onClick={() => { setShowAddEntry(false); setSelectedSkill(null); }} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50">Cancel</button><button onClick={addEntry} className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg">Save Entry</button></div></div></div>)}
+        
+        {showAddSkill && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"><div className="bg-white rounded-2xl p-6 w-full max-w-md"><h3 className="text-xl font-bold text-gray-800 mb-4">Add New Skill</h3><div className="space-y-4">
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Skill Name</label><input type="text" value={newSkill.name} onChange={(e) => setNewSkill({...newSkill, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl text-gray-900" placeholder="e.g., Python Programming"/></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Category</label><input type="text" value={newSkill.category} onChange={(e) => setNewSkill({...newSkill, category: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl text-gray-900" placeholder="e.g., Programming"/></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Daily Target (hours)</label><input type="number" step="0.5" value={newSkill.targetHours} onChange={(e) => setNewSkill({...newSkill, targetHours: parseFloat(e.target.value)})} className="w-full p-3 border border-gray-300 rounded-xl text-gray-900"/></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Color</label><div className="flex gap-2">{colors.map(color => <button key={color} onClick={() => setNewSkill({...newSkill, color})} className={`w-8 h-8 rounded-full ${color} ${newSkill.color === color ? 'ring-4 ring-gray-400' : ''}`} />)}</div></div>
+        </div><div className="flex gap-3 mt-6"><button onClick={() => setShowAddSkill(false)} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50">Cancel</button><button onClick={addSkill} className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg">Add Skill</button></div></div></div>)}
+        
+        {showAddEntry && selectedSkill && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"><div className="bg-white rounded-2xl p-6 w-full max-w-md"><h3 className="text-xl font-bold text-gray-800 mb-4">Add Progress Entry</h3><p className="text-gray-600 mb-4">For: {selectedSkill.name}</p><div className="space-y-4">
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Date</label><input type="date" value={newEntry.date} onChange={(e) => setNewEntry({...newEntry, date: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl text-gray-900"/></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Hours Practiced</label><input type="number" step="0.25" value={newEntry.hours} onChange={(e) => setNewEntry({...newEntry, hours: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl text-gray-900" placeholder="1.5"/></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label><textarea value={newEntry.notes} onChange={(e) => setNewEntry({...newEntry, notes: e.target.value})} className="w-full p-3 border border-gray-300 rounded-xl h-24 resize-none text-gray-900" placeholder="What did you learn or practice today?"/></div>
+        </div><div className="flex gap-3 mt-6"><button onClick={() => { setShowAddEntry(false); setSelectedSkill(null); }} className="flex-1 py-3 border border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50">Cancel</button><button onClick={addEntry} className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg">Save Entry</button></div></div></div>)}
       </div>
     </div>
   );
