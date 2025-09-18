@@ -24,20 +24,20 @@ interface Skill {
 
 const ProgressTracker = () => {
   // Use the correct, specific types for our state
-  const [skills, setSkills] = React.useState<Skill[]>([]);
-  const [selectedSkill, setSelectedSkill] = React.useState<Skill | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   
-  const [activeTab, setActiveTab] = React.useState('overview');
-  const [showAddSkill, setShowAddSkill] = React.useState(false);
-  const [showAddEntry, setShowAddEntry] = React.useState(false);
-  const [currentDate, setCurrentDate] = React.useState(new Date());
-  const [newSkill, setNewSkill] = React.useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
-  const [newEntry, setNewEntry] = React.useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [showAddEntry, setShowAddEntry] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [newSkill, setNewSkill] = useState({ name: '', category: '', targetHours: 1, color: 'bg-blue-500' });
+  const [newEntry, setNewEntry] = useState({ hours: '', notes: '', date: new Date().toISOString().split('T')[0] });
 
   const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500', 'bg-teal-500'];
 
   // Fetch data from Firestore
-  React.useEffect(() => {
+  useEffect(() => {
     const skillsCollection = collection(db, 'skills');
     const unsubscribe = onSnapshot(skillsCollection, (snapshot) => {
       const skillsData = snapshot.docs.map(doc => ({
