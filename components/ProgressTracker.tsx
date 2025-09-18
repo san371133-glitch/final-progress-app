@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft, LogOut } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Target, BookOpen, Award, ChevronRight, ChevronLeft, LogOut ,Trash2 } from 'lucide-react';
 import { db, auth } from '../firebase/config';
-import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion, query, where, deleteDoc } from 'firebase/firestore';
 import { User, signOut } from 'firebase/auth';
 
 // Define the shape of our data for TypeScript
@@ -63,6 +63,18 @@ const ProgressTracker = ({ user }: { user: User }) => {
       setSelectedSkill(null);
     }
   };
+  const deleteSkill = async (skillId: string) => {
+    // Ask for confirmation before deleting
+    if (window.confirm("Are you sure you want to delete this skill and all its entries? This action cannot be undone.")) {
+      try {
+        const skillDocRef = doc(db, 'skills', skillId);
+        await deleteDoc(skillDocRef);
+      } catch (error) {
+        console.error("Error deleting skill: ", error);
+        alert("There was an error deleting the skill.");
+      }
+    }
+  };
 
   const handleLogout = () => {
     signOut(auth);
@@ -102,8 +114,39 @@ const ProgressTracker = ({ user }: { user: User }) => {
   const navigateMonth = (direction: number) => { const newDate = new Date(currentDate); newDate.setMonth(currentDate.getMonth() + direction); setCurrentDate(newDate); };
   const isToday = (date: Date) => new Date().toDateString() === date.toDateString();
   const TabButton = ({ id, icon: Icon, label, isActive, onClick }: { id: string, icon: React.ElementType, label: string, isActive: boolean, onClick: (id: string) => void }) => ( <button onClick={() => onClick(id)} className={`flex items-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 ${ isActive ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 border border-gray-200' }`}><Icon size={20} /><span>{label}</span></button> );
-  const SkillCard = ({ skill }: { skill: Skill }) => ( <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer hover:transform hover:scale-105"><div className="flex items-center justify-between mb-4"><div className="flex items-center gap-3"><div className={`w-4 h-4 rounded-full ${skill.color}`}></div><h3 className="font-bold text-lg text-gray-800">{skill.name}</h3></div><span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{skill.category}</span></div><div className="space-y-3"><div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div><div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div><div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div><div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div></div></div> );
-
+  const SkillCard = ({ skill }: { skill: Skill }) => ( 
+    <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group relative">
+      {/* New Delete Button */}
+      <button 
+        onClick={(e) => {
+          e.stopPropagation(); // Prevents the card's main click event
+          deleteSkill(skill.id);
+        }}
+        className="absolute top-4 right-4 p-2 bg-red-100 text-red-500 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-200 transition-opacity duration-300"
+        title="Delete Skill"
+      >
+        <Trash2 size={16} />
+      </button>
+  
+      <div onClick={() => { setSelectedSkill(skill); setShowAddEntry(true); }} className="cursor-pointer">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-4 h-4 rounded-full ${skill.color}`}></div>
+            <h3 className="font-bold text-lg text-gray-800">{skill.name}</h3>
+          </div>
+          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            {skill.category}
+          </span>
+        </div>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center"><span className="text-sm text-gray-600">Total Hours</span><span className="font-bold text-xl text-gray-800">{getTotalHours(skill).toFixed(1)}h</span></div>
+          <div className="flex justify-between items-center"><span className="text-sm text-gray-600">This Week</span><span className="font-semibold text-green-600">{getWeekProgress(skill).toFixed(1)}h</span></div>
+          <div className="bg-gray-200 rounded-full h-2 overflow-hidden"><div className={`h-full ${skill.color} transition-all duration-500`} style={{ width: `${Math.min((getTotalHours(skill) / (skill.targetHours * 10)) * 100, 100)}%` }}></div></div>
+          <div className="text-xs text-gray-500 text-center">Target: {skill.targetHours}h/day</div>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="bg-white shadow-sm border-b border-gray-200">
