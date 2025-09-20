@@ -1,0 +1,21 @@
+@import "tailwindcss/preflight";
+@tailwind utilities;
+@tailwind utilities;
+
+/*
+  This sets a beautiful, light gradient as the background for the entire application.
+  It transitions from a soft blue to a gentle lavender, creating a calm and
+  professional feel.
+*/
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/*
+  The ".glass-card" style is updated for the new light theme. It has a subtle
+  white, semi-transparent background, a soft blur, and a delicate border.
+  This creates the elegant frosted-glass effect on top of our new background.
+*/
+.glass-card {
+  @apply bg-white bg-opacity-40 backdrop-blur-lg rounded-2xl border border-white border-opacity-20 shadow-lg;
+}
