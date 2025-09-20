@@ -102,16 +102,4 @@ const ProgressTracker = ({ user }: { user: User }) => {
 };
 
 export default ProgressTracker;
-```
-### ## Save and Deploy the Fix
-1.  **Save** the `ProgressTracker.tsx` file.
-2.  Test the changes on your local server (`npm run dev`) to confirm the input text is now dark and easy to read.
-3.  Once you're happy, push the final change to GitHub to update your live application.
-    ```bash
-    git add .
-    ```
-    ```bash
-    git commit -m "Fix input text color for better readability"
-    ```
-    ```bash
-    git push
+
